@@ -1,0 +1,75 @@
+.POSIX:
+.SUFFIXES:
+.SUFFIXES: .c .o .uto
+
+VERSION    = 1.0.0
+
+CC         = @CC@
+CCOV       = gcov
+CFLAGS     = @CFLAGS@
+CFLAGS_COV = @CFLAGS_COV@
+CFLAGS_SAN = @CFLAGS_SAN@
+INCLUDEDIR = @PREFIX@/include
+LD         = @LD@
+LIBDIR     = @PREFIX@/lib
+PREFIX     = @PREFIX@
+
+.PHONY: all
+all: liblist.a
+all: test_readme
+all: llist.coverage
+
+liblist.a: llist.o
+	$(LD) -r $^ -o $@
+
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.c.uto:
+	$(CC) $(CFLAGS) $(CFLAGS_COV) $(CFLAGS_SAN) -I. -c $^ -o $@
+
+test_readme: README.md liblist.a
+	awk '/```c/{ C=1; next } /```/{ C=0 } C' README.md | sed -e 's#liblist/##' > test_readme.c
+	$(CC) $(CFLAGS) $(CFLAGS_SAN) -I. test_readme.c llist.c -o $@
+	./$@
+
+llist.coverage: tests/test_llist.uto tests/memory_shim.o
+	$(CC) $(CFLAGS) $(CFLAGS_COV) $(CFLAGS_SAN) -I. $^ -o $@
+	./$@
+	$(CCOV) tests/test_llist.c
+	! grep "#####" llist.c.gcov |grep -ve "// UNREACHABLE$$"
+
+liblist.pc:
+	( echo 'Name: liblist' ;\
+	echo 'Version: $(VERSION)' ;\
+	echo 'Description: Doubly-Linked List Implementation in C' ;\
+	echo 'prefix=$(PREFIX)' ;\
+	echo 'exec_prefix=$${prefix}' ;\
+	echo 'includedir=$${prefix}/include' ;\
+	echo 'libdir=$${prefix}/lib' ;\
+	echo 'Cflags: -I$${includedir}' ;\
+	echo 'Libs: -L$${libdir} -llist' ) > $@
+
+.PHONY: install
+install: llist.h liblist.a liblist.pc
+	mkdir -p $(INCLUDEDIR)/liblist
+	mkdir -p $(LIBDIR)/pkgconfig
+	install -m644 llist.h $(INCLUDEDIR)/liblist/llist.h
+	install -m644 liblist.a $(LIBDIR)/liblist.a
+	install -m644 liblist.pc $(LIBDIR)/pkgconfig/liblist.pc
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(INCLUDEDIR)/liblist/llist.h
+	rm -f $(LIBDIR)/liblist.a
+	rm -f $(LIBDIR)/pkgconfig/liblist.pc
+
+.PHONY: clean
+clean:
+	rm -f *.o **/*.o *.uto **/*.uto *.gc?? **/*.gc?? *.coverage
+	rm -f liblist.a liblist.pc
+	rm -f test_readme*
+
+.PHONY: distclean
+distclean: clean
+	rm -f Makefile config.status
