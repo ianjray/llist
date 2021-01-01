@@ -136,17 +136,16 @@ struct list_iter *list_iter_advance(struct list_iter *iter, ssize_t distance)
     while (distance < 0) {
         if (iter == list_begin(l)) {
             break;
-        } else {
-            iter = (struct list_iter *)iter->node.prev;
-            distance++;
         }
+        iter = (struct list_iter *)iter->node.prev;
+        distance++;
     }
     while (distance > 0) {
-        iter = (struct list_iter *)iter->node.next;
-        distance--;
         if (iter == list_end(l)) {
             break;
         }
+        iter = (struct list_iter *)iter->node.next;
+        distance--;
     }
     return iter;
 }
@@ -331,6 +330,8 @@ int main(void)
     assert(t1 == list_iter_deref(it));
     it = list_iter_inc(it);
     assert(t2 == list_iter_deref(it));
+    it = list_iter_inc(it);
+    assert(list_end(l) == it);
     it = list_iter_inc(it);
     assert(list_end(l) == it);
 
