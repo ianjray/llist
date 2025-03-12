@@ -46,10 +46,12 @@ struct list {
 struct list *list_new(size_t offset)
 {
     struct list *l = calloc(1, sizeof(struct list));
-    l->sentinel.prev = &l->sentinel;
-    l->sentinel.next = &l->sentinel;
-    l->sentinel.list = l;
-    l->offset = offset;
+    if (l) {
+        l->sentinel.prev = &l->sentinel;
+        l->sentinel.next = &l->sentinel;
+        l->sentinel.list = l;
+        l->offset = offset;
+    }
     return l;
 }
 
