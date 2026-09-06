@@ -6,5 +6,7 @@ test_compiler_flags "${CC}" CFLAGS_COV OPTIONAL "--coverage" "--dumpbase ''"
 
 test_compiler_flags "${CC}" CFLAGS_SAN OPTIONAL "-fsanitize=address"
 
+test_api "${CC}" errno.h EOVERFLOW "return EOVERFLOW;"
+
 populate "${SRCDIR}"
 populate "${SRCDIR}/tests"

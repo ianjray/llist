@@ -6,6 +6,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t)-1)
+#endif
+
 struct list {
     /// Uses a dummy 'sentinel' node, in order to simplify link management.
     ///
@@ -289,7 +293,11 @@ struct list_iter *list_insert(struct list_iter *it, void *element)
 
     if (l->size == SIZE_MAX) {
         // Detect pathological overflow case.
+#ifdef HAS_EOVERFLOW
         errno = EOVERFLOW;
+#else
+        errno = ENOSPC;
+#endif
         return NULL;
     }
 

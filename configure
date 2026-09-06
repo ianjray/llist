@@ -357,6 +357,33 @@ EOF
 	cd "${B}"
 }
 
+test_api() {
+	COMPILER="$1"
+	HEADER="$2"
+	API="$3"
+	CODE="$4"
+
+	cd "${WORKDIR}"
+
+	PROBE="$(__filename_of "${COMPILER}")"
+	cat <<EOF >"${PROBE}"
+#include <${HEADER}>
+int main(void) { ${CODE} }
+EOF
+
+	echo eval "${COMPILER} -Werror \"${PROBE}\" -o /dev/null"
+	eval "${COMPILER} -Werror \"${PROBE}\" -o /dev/null"
+
+	if eval "${COMPILER} -Werror \"${PROBE}\" -o /dev/null" 2>/dev/null; then
+		printf '%s\n' "${COMPILER} has ${API}"
+		CFLAGS="${CFLAGS} -DHAS_$(echo "${API}" | tr '[:lower:]' '[:upper:]')"
+	else
+		printf '%s\n' "${COMPILER} missing ${API}"
+	fi
+
+	cd "${B}"
+}
+
 populate() {
 	POPULATED="${POPULATED} $*"
 }
